@@ -1,0 +1,34 @@
+spark.sql
+
+spark.sql("SELECT current_catalog()").collect()[0][0]
+
+USE CATALOG {self.catalog_name}
+CREATE SCHEMA IF NOT EXISTS {self.db_name}
+USE SCHEMA {self.db_name}
+
+
+self.catalog_name -> "hive_metastore"
+dataset_path = 'dbfs:/mnt/demo-datasets/DE-Pro/bookstore'
+
+checkpoint_path = "dbfs:/mnt/demo_pro/checkpoints"
+
+volume_root = f"/Volumes/{self.catalog_name}/{self.db_name}"
+
+CREATE VOLUME IF NOT EXISTS {dataset_volume_name}
+
+CREATE VOLUME IF NOT EXISTS {checkpoints_volume_name}
+
+dbutils.fs.ls(dir)
+dbutils.fs.cp(source, target)
+
+spark.readStream -> format, schema, load, withColumn, table, select
+
+writeStream -> table, partitionBy
+mergeSchema, checkpointLocation
+trigger, start, foreachBatch, outputMode
+
+
+MERGE INTO target USING source ON
+--> WHEN MACTHED, WHEN NOT MACTHED
+
+Configure auto loader for reliable ingestion - pathGlobFilter -> *.png pattern, schema, maxBytesPerTrigger, badRecordsPath, schemaEvolutionMode

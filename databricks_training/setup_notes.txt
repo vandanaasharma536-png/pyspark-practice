@@ -1,0 +1,112 @@
+At the top level on Databricks, you have an account to access Databricks across organization
+- Next level - Workspaces, Metastore (Unity Catalog)
+Users, Groups, SCIM connectors, CLI, APIs
+Service Principals, SSO Configuration
+
+Step 1 -  Data Ingestion Setup
+Names specified in configuration file / database (single values or list), default access could also be specified in configuration
+
+- Create new catalog -> use catalog (legacy : hive_metastore)
+- Create new schemas -> use schema
+- Create new databases -> use database
+- Create volumes (managed and external)
+- Access (GRANT, REVOKE), Policies (mask columns, hide rows)
+
+--------------------
+(Side Note: IAM - Identity and Access Management, RBAC : Role Based Access Control)
+- For external volumes (ADLS (Azure Data Lake Storage) Gen 2 for example)
+- Databricks Access Connector Managed Identity needs to have Storage Blob Data Reader/Contributor access to the storage account  
+(Managed Identity is either auto generated or User Assigned)
+- Service Principal is used for resources outside Azure ecosystem, like connecting from your local system)
+
+I added 'Storage Blob Data Contributor' access for my account using Azure portal to be able to access files/folders within a container
+
+--------------------
+(Side Notes: Azure: portal.azure.com)
+- Subscription -> Resource Group -> Storage account
+- Gen 1 vs Gen 2 storage
+- ADLS Gen 2 : 
+Hierarchical Namespace, Archive-Cold-Cool-Hot Storage Tiers, Soft Delete with 7 days retention (configurable), PrivateLink (Requires VNet and Subnet), LRS/GRS/ZRS storage (Locally redundant, Zone redundant, Geo redundant storage), Region, Disabled storge account key access, TLS version, Encryption (Microsoft Managed vs Customer Managed),
+Access from selected virtual networks and IP addresses, Routing (Microsoft network vs Internet), Tags, Lease acquisition, Containers
+
+Access Key, RBAC : Users, Groups, Service Principals, Managed Identity
+Other settings :  CORS setting (Cross Origin Resource Sharing), SAS (Shared Access Signature), POSIX style ACL for folder and file level access
+POSIX : Portable Operating System Interface based on UNIX OS
+ACL : Access Control List
+
+--------------------
+
+(Side Note: Firewall Setup)
+ - In a secure system, connection to ADLS storage account is allowed only from "Selected Virtual Networks and IP addresses"
+ - Hence, add both (public and private) Databricks subnets to allowed network
+ - ADLS account needs to have a PrivateLink setup in the VNet -> Subnet
+ - Firewall rules should allow connection from Databricks subnets or NAT (Network Address Translator) gateway public IP
+
+NAT gateway is the bridge between your private virtual network and Internet
+You add a rule in your route table to direct all internet traffic (0.0.0.0/0) through NAT gateway so it take a public IP address
+
+In my setup I added by public IP (https://www.whatismyip.com/) 
+192.168.96.73 --> this is a private IP (192.168.x.x, 10.x.x.x, 172.16.x.x - 172.31.x.x)
+CIDR : Classless Inter-Domain Routing
+
+
+--------------------
+
+(Side Notes - Lake vs Warehouse, Structured vs Semi Structured vs Unstructured Data)
+
+(Side Note: Databricks Architecture)
+ - Public and Private Subnets
+ - Control Plane and Data/Compute plane
+The compute plane interacts with the control plane using a public IP address
+The control plane lives outside your network so Databricks can manage it efficiently for everyone
+(multi-tenant control plane, a shared services layer that Databricks must manage centrally to serve all its customers)
+SCIM - System for cross domain identity management (Open Standard)
+- For example: Microsoft Entra id users and groups need to be added to Databricks SCIM connector for configuring further access)
+SSO - Single Sign On - allows secure access to multiple independent applications using on set of credentials, common protocols - OAuth 2.0, Open ID Connect (OIDC), SAML - Security Assertion Markup Language. It is combined with MFA - MultiFactor Authentication to avoid risk with compromised credentials
+
+--------------------
+
+
+
+TODO - Consider CI/CD details
+
+
+-------------------------------------------------------------- 
+
+Step 2 -  Data Ingestion 
+(Static data and Dynamic data)
+(Batch ingestion (Scheduled intervals or Manual on demand ingestion, CDC and Streaming ingestion - Pub/Sub, Event Hub)
+
+SinglePlex Ingestion Model : one-to-one mapping between data sources and bronze tables ) 
+- High isolation
+- simpler debugging
+- easy management of distinct batch datasets
+
+Multiplex Ingestion Model : many-to-one mapping between data sources and bronze table 
+- could be limited by the number of parallel processes your system can execute (maximum concurrent job limits)
+- suitable for high volume, diverse data
+- reduced pipeline complexity
+
+ODS - Operational Data Store
+
+Service Account created by Fivetran (14 days free trial):
+g-busload-humbler@fivetran-production.iam.gserviceaccount.com
+
+Static data sources (to be updated in June and December)
+
+Configure access to your Google Drive folder for the above account
+
+Data Sources -
+Bi-Annual: NIFTY-IT, BSE-IT list
+https://dhan.co/bse-stocks-list/bse-it/
+
+-------------------------------------------------------------- 
+
+Step 3 : Data Transformation
+
+(Side Note - Classic vs Serverless Compute)
+
+
+-------------------------------------------------------------- 
+
+Mosaic AI/ Delta sharing
